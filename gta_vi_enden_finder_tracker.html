@@ -1,0 +1,2844 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GTA VI Enden" />
+  <title>GTA VI – Enden-Finder & Tracker</title>
+  <style>
+    /* ==========================================================================
+       1. DESIGN TOKENS & VICE-CITY DARK THEME
+       ========================================================================== */
+    :root {
+      --bg-outer: #060a14;
+      --bg-app: #0f172a;
+      --bg-card: #1e293b;
+      --bg-card-hover: #263449;
+      --bg-elevated: #283548;
+      --bg-input: #0b1220;
+
+      --border-subtle: rgba(148, 163, 184, 0.16);
+      --border-strong: rgba(148, 163, 184, 0.28);
+
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+
+      --neon-pink: #ec4899;
+      --neon-pink-soft: rgba(236, 72, 153, 0.16);
+      --neon-pink-border: rgba(236, 72, 153, 0.45);
+
+      --neon-cyan: #06b6d4;
+      --neon-cyan-soft: rgba(6, 182, 212, 0.16);
+      --neon-cyan-border: rgba(6, 182, 212, 0.45);
+
+      --status-done: #22c55e;
+      --status-done-soft: rgba(34, 197, 94, 0.16);
+      --status-done-border: rgba(34, 197, 94, 0.42);
+
+      --status-open: #eab308;
+      --status-open-soft: rgba(234, 179, 8, 0.16);
+      --status-open-border: rgba(234, 179, 8, 0.42);
+
+      --status-progress: #38bdf8;
+      --status-progress-soft: rgba(56, 189, 248, 0.16);
+      --status-progress-border: rgba(56, 189, 248, 0.42);
+
+      --danger: #ef4444;
+      --danger-soft: rgba(239, 68, 68, 0.16);
+
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 22px;
+      --radius-pill: 999px;
+
+      --nav-height: 70px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* ==========================================================================
+       2. RESET & BASE LAYOUT (MOBILE-FIRST + DESKTOP PHONE FRAME)
+       ========================================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background-color: var(--bg-outer);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* Subtle Vice-City ambient backdrop on desktop */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(236, 72, 153, 0.18), transparent 42%),
+        radial-gradient(circle at 82% 88%, rgba(6, 182, 212, 0.18), transparent 44%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app-shell {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 480px;
+      min-height: 100dvh;
+      margin: 0 auto;
+      background: var(--bg-app);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 0 60px rgba(0, 0, 0, 0.75);
+    }
+
+    @media (min-width: 520px) {
+      body {
+        padding: 18px 12px;
+      }
+      .app-shell {
+        min-height: calc(100dvh - 36px);
+        border-radius: 30px;
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        overflow: hidden;
+      }
+    }
+
+    /* ==========================================================================
+       3. HEADER & SPOILER TOGGLE
+       ========================================================================== */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      background: linear-gradient(90deg, var(--neon-pink), #f472b6 45%, var(--neon-cyan));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      line-height: 1.15;
+    }
+
+    .brand-sub {
+      font-size: 0.74rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .spoiler-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 11px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      flex-shrink: 0;
+    }
+
+    .spoiler-toggle.active {
+      background: var(--neon-pink-soft);
+      border-color: var(--neon-pink-border);
+      color: #fbcfe8;
+    }
+
+    .spoiler-toggle:active {
+      transform: scale(0.96);
+    }
+
+    /* ==========================================================================
+       4. MAIN CONTENT & ANIMATIONS
+       ========================================================================== */
+    .app-main {
+      flex: 1;
+      padding: 16px 16px calc(var(--nav-height) + var(--safe-bottom) + 24px);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .fade-in {
+      animation: fadeSlideIn 0.22s ease-out both;
+    }
+
+    @keyframes fadeSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ==========================================================================
+       5. BREADCRUMBS (FINDER STEP BAR)
+       ========================================================================== */
+    .finder-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .finder-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--neon-cyan);
+    }
+
+    .btn-mini-reset {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 12px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-mini-reset:active {
+      transform: scale(0.95);
+    }
+
+    .breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 4px 2px 6px;
+      scrollbar-width: none;
+    }
+
+    .breadcrumbs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .crumb {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 11px;
+      border-radius: var(--radius-pill);
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+      border: 1px solid var(--border-subtle);
+      background: rgba(30, 41, 59, 0.55);
+      color: var(--text-muted);
+      cursor: default;
+      transition: all 0.16s ease;
+    }
+
+    .crumb.done {
+      background: var(--neon-cyan-soft);
+      border-color: var(--neon-cyan-border);
+      color: #cffafe;
+      cursor: pointer;
+    }
+
+    .crumb.done:active {
+      transform: scale(0.96);
+    }
+
+    .crumb.current {
+      background: var(--neon-pink-soft);
+      border-color: var(--neon-pink);
+      color: #ffffff;
+      box-shadow: 0 0 12px rgba(236, 72, 153, 0.25);
+    }
+
+    .crumb-sep {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    /* ==========================================================================
+       6. CARDS, STEP BUTTONS & LOCK BANNERS
+       ========================================================================== */
+    .step-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 18px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .step-header {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .step-kicker {
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--neon-pink);
+    }
+
+    .step-title {
+      margin: 0;
+      font-size: 1.24rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .step-desc {
+      margin: 0;
+      font-size: 0.86rem;
+      color: var(--text-secondary);
+    }
+
+    .choice-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .choice-btn {
+      width: 100%;
+      text-align: left;
+      padding: 16px 16px;
+      min-height: 64px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-strong);
+      background: linear-gradient(145deg, rgba(38, 52, 73, 0.85), rgba(15, 23, 42, 0.9));
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: transform 0.12s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .choice-btn:hover {
+      border-color: var(--neon-cyan);
+    }
+
+    .choice-btn:active {
+      transform: scale(0.98);
+      border-color: var(--neon-pink);
+      box-shadow: 0 0 0 2px var(--neon-pink-soft);
+    }
+
+    .choice-btn.accent-pink {
+      border-color: var(--neon-pink-border);
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.18), rgba(30, 41, 59, 0.95));
+    }
+
+    .choice-btn.accent-cyan {
+      border-color: var(--neon-cyan-border);
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.18), rgba(30, 41, 59, 0.95));
+    }
+
+    .choice-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .choice-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .choice-sub {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .choice-arrow {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(148, 163, 184, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--neon-cyan);
+      font-weight: 700;
+    }
+
+    /* Highlighted Lock Card */
+    .lock-banner {
+      border-radius: var(--radius-md);
+      border: 1px solid var(--neon-cyan-border);
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.14), rgba(15, 23, 42, 0.92));
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .lock-banner.warn {
+      border-color: var(--status-open-border);
+      background: linear-gradient(135deg, rgba(234, 179, 8, 0.14), rgba(15, 23, 42, 0.92));
+    }
+
+    .lock-banner-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      font-size: 0.98rem;
+      color: #ffffff;
+    }
+
+    .lock-banner-text {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    /* Primary & Secondary Action Buttons */
+    .btn {
+      width: 100%;
+      min-height: 50px;
+      padding: 13px 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.12s ease, opacity 0.15s ease, background 0.15s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: linear-gradient(90deg, var(--neon-pink), #db2777);
+      color: #ffffff;
+      box-shadow: 0 6px 20px rgba(236, 72, 153, 0.32);
+    }
+
+    .btn-cyan {
+      background: linear-gradient(90deg, var(--neon-cyan), #0891b2);
+      color: #06131f;
+      box-shadow: 0 6px 20px rgba(6, 182, 212, 0.25);
+    }
+
+    .btn-secondary {
+      background: var(--bg-elevated);
+      border-color: var(--border-strong);
+      color: var(--text-primary);
+    }
+
+    .btn-danger {
+      background: var(--danger-soft);
+      border-color: rgba(239, 68, 68, 0.45);
+      color: #fecaca;
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* ==========================================================================
+       7. BADGES, CHIPS & RESULT VIEW
+       ========================================================================== */
+    .chip-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 0.74rem;
+      font-weight: 600;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--border-subtle);
+      color: #e2e8f0;
+    }
+
+    .chip-lock {
+      background: rgba(6, 182, 212, 0.14);
+      border-color: var(--neon-cyan-border);
+      color: #cffafe;
+    }
+
+    .chip-pink {
+      background: var(--neon-pink-soft);
+      border-color: var(--neon-pink-border);
+      color: #fbcfe8;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 11px;
+      border-radius: var(--radius-pill);
+      font-size: 0.76rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .status-done {
+      background: var(--status-done-soft);
+      border: 1px solid var(--status-done-border);
+      color: #86efac;
+    }
+
+    .status-open {
+      background: var(--status-open-soft);
+      border: 1px solid var(--status-open-border);
+      color: #fde047;
+    }
+
+    .status-progress {
+      background: var(--status-progress-soft);
+      border: 1px solid var(--status-progress-border);
+      color: #bae6fd;
+    }
+
+    .result-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .path-id-tag {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      background: var(--bg-app);
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* Spoiler-aware outcome box */
+    .outcome-box {
+      position: relative;
+      border-radius: var(--radius-md);
+      background: var(--bg-input);
+      border: 1px solid var(--border-strong);
+      padding: 16px;
+      min-height: 92px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 6px;
+      overflow: hidden;
+    }
+
+    .outcome-box.spoiler-locked {
+      cursor: pointer;
+    }
+
+    .outcome-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+
+    .outcome-text {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      transition: filter 0.2s ease;
+    }
+
+    .outcome-box.spoiler-locked .outcome-text {
+      filter: blur(8px);
+      user-select: none;
+    }
+
+    .spoiler-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.52);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #fbcfe8;
+      backdrop-filter: blur(2px);
+    }
+
+    /* Quick 3-way status switcher */
+    .quick-status {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .qs-btn {
+      padding: 10px 6px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-input);
+      color: var(--text-secondary);
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .qs-btn.active-done {
+      background: var(--status-done-soft);
+      border-color: var(--status-done);
+      color: #86efac;
+    }
+
+    .qs-btn.active-progress {
+      background: var(--status-progress-soft);
+      border-color: var(--status-progress);
+      color: #bae6fd;
+    }
+
+    .qs-btn.active-open {
+      background: var(--status-open-soft);
+      border-color: var(--status-open);
+      color: #fde047;
+    }
+
+    /* ==========================================================================
+       8. TAB 2: ÜBERSICHT (PROGRESS + FILTERS + PATH CARDS)
+       ========================================================================== */
+    .progress-card {
+      background: linear-gradient(145deg, #1e293b, #141e33);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .progress-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .progress-count {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .progress-pct {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--neon-cyan);
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 11px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-input);
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: var(--radius-pill);
+      background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan), var(--status-done));
+      transition: width 0.35s ease;
+    }
+
+    .progress-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .stat-pill {
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 8px 6px;
+      text-align: center;
+      font-size: 0.74rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .stat-pill strong {
+      display: block;
+      font-size: 0.98rem;
+      margin-bottom: 2px;
+      color: var(--text-primary);
+    }
+
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 2px 0 4px;
+      scrollbar-width: none;
+    }
+
+    .filter-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .filter-chip {
+      padding: 9px 14px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .filter-chip.active {
+      background: var(--neon-pink-soft);
+      border-color: var(--neon-pink);
+      color: #ffffff;
+    }
+
+    .overview-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .overview-count-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .btn-add-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 14px;
+      border-radius: var(--radius-pill);
+      border: none;
+      background: linear-gradient(90deg, var(--neon-pink), #db2777);
+      color: #ffffff;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(236, 72, 153, 0.3);
+    }
+
+    .btn-add-inline:active {
+      transform: scale(0.96);
+    }
+
+    .path-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .path-card {
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-left: 5px solid var(--status-open);
+      border-radius: var(--radius-md);
+      padding: 13px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.15s ease;
+    }
+
+    .path-card:active {
+      transform: scale(0.985);
+      background: var(--bg-card-hover);
+    }
+
+    .path-card.is-done {
+      border-left-color: var(--status-done);
+    }
+
+    .path-card.is-open {
+      border-left-color: var(--status-open);
+    }
+
+    .path-card.is-progress {
+      border-left-color: var(--status-progress);
+    }
+
+    .path-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .path-card-title {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .path-card-outcome {
+      margin: 0;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .path-card-outcome.blurred {
+      filter: blur(5px);
+      user-select: none;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      border: 1px dashed var(--border-strong);
+    }
+
+    /* ==========================================================================
+       9. TAB 3: DATEN & PWA GUIDE
+       ========================================================================== */
+    .data-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .data-card h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .data-card p {
+      margin: 0;
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+    }
+
+    .sync-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--status-done-soft);
+      border: 1px solid var(--status-done-border);
+      color: #bbf7d0;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .guide-steps {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .guide-steps li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      padding: 11px 12px;
+      border-radius: var(--radius-sm);
+    }
+
+    .guide-num {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--neon-pink-soft);
+      border: 1px solid var(--neon-pink-border);
+      color: #fbcfe8;
+      font-size: 0.78rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .guide-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .guide-tab-btn {
+      padding: 9px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-input);
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .guide-tab-btn.active {
+      background: var(--neon-cyan-soft);
+      border-color: var(--neon-cyan);
+      color: #ffffff;
+    }
+
+    /* ==========================================================================
+       10. BOTTOM NAVIGATION BAR
+       ========================================================================== */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      z-index: 30;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid var(--border-subtle);
+      padding: 8px 10px calc(8px + var(--safe-bottom));
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    @media (min-width: 520px) {
+      .bottom-nav {
+        bottom: 18px;
+        border-radius: 0 0 30px 30px;
+        border-left: 1px solid rgba(148, 163, 184, 0.22);
+        border-right: 1px solid rgba(148, 163, 184, 0.22);
+        border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+      }
+    }
+
+    .nav-btn {
+      position: relative;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      padding: 8px 6px;
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.16s ease;
+    }
+
+    .nav-btn svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .nav-btn.active {
+      color: var(--neon-pink);
+      background: var(--neon-pink-soft);
+    }
+
+    .nav-badge {
+      position: absolute;
+      top: 4px;
+      right: calc(50% - 26px);
+      background: var(--neon-cyan);
+      color: #06131f;
+      font-size: 0.64rem;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: var(--radius-pill);
+    }
+
+    /* ==========================================================================
+       11. BOTTOM-SHEET MODAL & CUSTOM CONFIRM DIALOG
+       ========================================================================== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(2, 6, 23, 0.76);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+      animation: fadeBackdrop 0.18s ease-out;
+    }
+
+    @keyframes fadeBackdrop {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .bottom-sheet {
+      width: 100%;
+      max-width: 480px;
+      max-height: 90dvh;
+      overflow-y: auto;
+      background: var(--bg-app);
+      border-top: 1px solid var(--border-strong);
+      border-radius: 24px 24px 0 0;
+      padding: 14px 18px calc(22px + var(--safe-bottom));
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      animation: slideUp 0.22s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(36px); opacity: 0.5; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .sheet-handle {
+      width: 42px;
+      height: 5px;
+      border-radius: var(--radius-pill);
+      background: var(--border-strong);
+      margin: 0 auto 2px;
+    }
+
+    .sheet-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .sheet-title {
+      margin: 0;
+      font-size: 1.08rem;
+      font-weight: 800;
+    }
+
+    .btn-close-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    .form-label {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 12px 13px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-strong);
+      background: var(--bg-input);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.92rem;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--neon-cyan);
+    }
+
+    .form-textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    /* Centered Confirm Modal */
+    .confirm-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      background: rgba(2, 6, 23, 0.8);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .confirm-backdrop.open {
+      display: flex;
+    }
+
+    .confirm-box {
+      width: 100%;
+      max-width: 380px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+    }
+
+    .confirm-box h4 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+
+    .confirm-box p {
+      margin: 0;
+      font-size: 0.86rem;
+      color: var(--text-secondary);
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      top: 74px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-16px);
+      z-index: 70;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid var(--neon-cyan-border);
+      color: #ffffff;
+      padding: 11px 16px;
+      border-radius: var(--radius-pill);
+      font-size: 0.84rem;
+      font-weight: 700;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.22s ease;
+      max-width: calc(100% - 32px);
+      text-align: center;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Top App Header -->
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-title">GTA VI – Enden-Finder</span>
+        <span class="brand-sub">Spoilerfreier Pfad- &amp; Enden-Tracker</span>
+      </div>
+      <button id="spoilerToggleBtn" class="spoiler-toggle" type="button" aria-label="Spoiler-Schutz umschalten">
+        <span id="spoilerIcon">👁️</span>
+        <span id="spoilerLabel">Spoiler-Schutz</span>
+      </button>
+    </header>
+
+    <!-- Dynamic Main View -->
+    <main id="appMain" class="app-main"></main>
+
+    <!-- Fixed Bottom Navigation Bar -->
+    <nav class="bottom-nav" aria-label="Hauptnavigation">
+      <button class="nav-btn active" data-tab="finder" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"></circle>
+          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+        </svg>
+        <span>Finder</span>
+      </button>
+      <button class="nav-btn" data-tab="overview" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="8" y1="6" x2="21" y2="6"></line>
+          <line x1="8" y1="12" x2="21" y2="12"></line>
+          <line x1="8" y1="18" x2="21" y2="18"></line>
+          <circle cx="4" cy="6" r="1"></circle>
+          <circle cx="4" cy="12" r="1"></circle>
+          <circle cx="4" cy="18" r="1"></circle>
+        </svg>
+        <span>Übersicht</span>
+        <span id="navProgressBadge" class="nav-badge">3/14</span>
+      </button>
+      <button class="nav-btn" data-tab="data" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+          <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+        </svg>
+        <span>Daten</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Bottom-Sheet Modal for Editing / Creating Paths -->
+  <div id="editModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="bottom-sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <h2 id="sheetTitle" class="sheet-title">Pfad bearbeiten</h2>
+        <button id="closeModalBtn" class="btn-close-icon" type="button" aria-label="Schließen">✕</button>
+      </div>
+      <form id="pathForm" class="form-grid">
+        <input type="hidden" id="fieldId" />
+
+        <div class="form-group">
+          <label class="form-label" for="fieldStatus">Status</label>
+          <select id="fieldStatus" class="form-select">
+            <option value="Offen">⬜ Offen</option>
+            <option value="In Arbeit">🔄 In Arbeit</option>
+            <option value="Erledigt">✅ Erledigt</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="fieldBeziehung">Beziehung</label>
+          <select id="fieldBeziehung" class="form-select">
+            <option value="Gut">Gut</option>
+            <option value="Schlecht">Schlecht</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="fieldProfil">Profil</label>
+          <input id="fieldProfil" class="form-input" list="profilSuggestions" required placeholder="z. B. Abgebrüht / Prof." />
+          <datalist id="profilSuggestions">
+            <option value="Abgebrüht / Prof."></option>
+            <option value="Gewalttätig+"></option>
+            <option value="Professionell"></option>
+            <option value="Egal"></option>
+          </datalist>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="fieldGeld">Geld</label>
+          <input id="fieldGeld" class="form-input" list="geldSuggestions" required placeholder="z. B. ≥ 2 Mio. / Prüfen" />
+          <datalist id="geldSuggestions">
+            <option value="≥ 2 Mio."></option>
+            <option value="< 2 Mio."></option>
+            <option value="Egal (Bonus ab 2 Mio.)"></option>
+            <option value="Prüfen"></option>
+            <option value="Prüfen (auch mittlerer Betrag)"></option>
+          </datalist>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="fieldStart">Start (vor Abe)</label>
+          <input id="fieldStart" class="form-input" list="startSuggestions" required placeholder="z. B. 🔒 Zusammen" />
+          <datalist id="startSuggestions">
+            <option value="🔒 Zusammen"></option>
+            <option value="Zusammen"></option>
+            <option value="Trennen"></option>
+          </datalist>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="fieldMendez">Méndez</label>
+          <input id="fieldMendez" class="form-input" list="mendezSuggestions" required placeholder="z. B. Erschossen" />
+          <datalist id="mendezSuggestions">
+            <option value="Erschossen"></option>
+            <option value="🔒 Erschossen"></option>
+            <option value="🔒 Erschossen?"></option>
+            <option value="Deal angenommen"></option>
+          </datalist>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label" for="fieldFinale">Finale Wahl</label>
+          <input id="fieldFinale" class="form-input" required placeholder="z. B. Losschwimmen → Aussteigen" />
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label" for="fieldErgebnis">Was passiert?</label>
+          <textarea id="fieldErgebnis" class="form-textarea" required placeholder="Deine eigene Notiz zum Ende..."></textarea>
+        </div>
+
+        <div class="form-group full" style="margin-top: 4px; gap: 8px;">
+          <button type="submit" class="btn btn-primary">💾 Änderungen speichern</button>
+          <button id="deletePathBtn" type="button" class="btn btn-danger" style="display: none;">🗑️ Pfad löschen</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Custom In-App Confirmation Dialog (No native alert/confirm) -->
+  <div id="confirmModal" class="confirm-backdrop" role="alertdialog" aria-modal="true">
+    <div class="confirm-box">
+      <h4 id="confirmTitle">Bestätigen</h4>
+      <p id="confirmMessage"></p>
+      <div class="btn-row">
+        <button id="confirmCancelBtn" class="btn btn-secondary" type="button">Abbrechen</button>
+        <button id="confirmOkBtn" class="btn btn-danger" type="button">Bestätigen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden file input for JSON import -->
+  <input id="jsonImportInput" type="file" accept=".json,application/json" style="display:none;" />
+
+  <!-- Toast Feedback -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* ==========================================================================
+         1. EXAKTE 14 SPOILERFREIE STARTDATEN
+         ========================================================================== */
+      const STORAGE_KEY = 'gta6_enden_tracker_v1_data';
+      const SPOILER_KEY = 'gta6_enden_tracker_v1_spoiler';
+
+      const DEFAULT_PATHS = [
+        {
+          id: 1,
+          beziehung: 'Gut',
+          profil: 'Gewalttätig+',
+          geld: 'Egal (Bonus ab 2 Mio.)',
+          start: '🔒 Zusammen',
+          mendez: '🔒 Erschossen',
+          finale: 'Losschwimmen',
+          ergebnis: 'Brücke: beide direkt erschossen (ab 2 Mio.: Mutter & Tante bekommen das Geld)',
+          status: 'Erledigt'
+        },
+        {
+          id: 2,
+          beziehung: 'Gut',
+          profil: 'Egal',
+          geld: 'Egal (Bonus ab 2 Mio.)',
+          start: '🔒 Zusammen',
+          mendez: 'Erschossen',
+          finale: 'Weiterfahren',
+          ergebnis: 'Beide tot (ab 2 Mio.: Mutter & Tante bekommen das Geld??)',
+          status: 'Erledigt'
+        },
+        {
+          id: 3,
+          beziehung: 'Gut',
+          profil: 'Abgebrüht / Prof.',
+          geld: '≥ 2 Mio.',
+          start: '🔒 Zusammen',
+          mendez: 'Erschossen',
+          finale: 'Losschwimmen → Aussteigen',
+          ergebnis: 'Lucia entkommt, Jason wird festgenommen & freigelassen, beide leben mit dem Sohn',
+          status: 'Erledigt'
+        },
+        {
+          id: 4,
+          beziehung: 'Gut',
+          profil: 'Abgebrüht / Prof.',
+          geld: '< 2 Mio.',
+          start: '🔒 Zusammen',
+          mendez: 'Erschossen',
+          finale: 'Losschwimmen → Aussteigen',
+          ergebnis: '??? (Vermutung: Lucia entkommt, Jason nicht – schlechtere Zukunft?)',
+          status: 'Offen'
+        },
+        {
+          id: 5,
+          beziehung: 'Gut',
+          profil: 'Abgebrüht / Prof.',
+          geld: 'Prüfen',
+          start: '🔒 Zusammen',
+          mendez: 'Erschossen',
+          finale: 'Losschwimmen → Gegenoption',
+          ergebnis: '???',
+          status: 'Offen'
+        },
+        {
+          id: 6,
+          beziehung: 'Gut',
+          profil: 'Abgebrüht / Prof.',
+          geld: 'Prüfen',
+          start: '🔒 Zusammen',
+          mendez: 'Deal angenommen',
+          finale: '???',
+          ergebnis: '???',
+          status: 'Offen'
+        },
+        {
+          id: 7,
+          beziehung: 'Schlecht',
+          profil: 'Abgebrüht / Prof.',
+          geld: 'Prüfen',
+          start: 'Zusammen',
+          mendez: 'Erschossen',
+          finale: '???',
+          ergebnis: '???',
+          status: 'Offen'
+        },
+        {
+          id: 8,
+          beziehung: 'Schlecht',
+          profil: 'Abgebrüht / Prof.',
+          geld: 'Prüfen',
+          start: 'Zusammen',
+          mendez: 'Deal angenommen',
+          finale: '???',
+          ergebnis: '???',
+          status: 'Offen'
+        },
+        {
+          id: 9,
+          beziehung: 'Schlecht',
+          profil: 'Gewalttätig+',
+          geld: 'Prüfen',
+          start: 'Zusammen',
+          mendez: '🔒 Erschossen?',
+          finale: '???',
+          ergebnis: '???',
+          status: 'Offen'
+        },
+        {
+          id: 10,
+          beziehung: 'Schlecht',
+          profil: 'Abgebrüht / Prof.',
+          geld: 'Prüfen',
+          start: 'Trennen',
+          mendez: 'Erschossen',
+          finale: 'Option 1',
+          ergebnis: '???',
+          status: 'Offen'
+        },
+        {
+          id: 11,
+          beziehung: 'Schlecht',
+          profil: 'Abgebrüht / Prof.',
+          geld: 'Prüfen',
+          start: 'Trennen',
+          mendez: 'Erschossen',
+          finale: 'Option 2',
+          ergebnis: '???',
+          status: 'Offen'
+        },
+        {
+          id: 12,
+          beziehung: 'Schlecht',
+          profil: 'Abgebrüht / Prof.',
+          geld: 'Prüfen',
+          start: 'Trennen',
+          mendez: 'Deal angenommen',
+          finale: '???',
+          ergebnis: '???',
+          status: 'Offen'
+        },
+        {
+          id: 13,
+          beziehung: 'Schlecht',
+          profil: 'Professionell',
+          geld: 'Prüfen (auch mittlerer Betrag)',
+          start: 'Trennen',
+          mendez: 'Deal angenommen',
+          finale: '???',
+          ergebnis: '???',
+          status: 'Offen'
+        },
+        {
+          id: 14,
+          beziehung: 'Schlecht',
+          profil: 'Gewalttätig+',
+          geld: 'Prüfen',
+          start: 'Trennen',
+          mendez: '🔒 Erschossen?',
+          finale: '???',
+          ergebnis: '???',
+          status: 'Offen'
+        }
+      ];
+
+      /* ==========================================================================
+         2. APPLICATION STATE
+         ========================================================================== */
+      const state = {
+        activeTab: 'finder', // 'finder' | 'overview' | 'data'
+        paths: loadPaths(),
+        spoilerShield: loadSpoilerSetting(),
+        overviewFilter: 'Alle',
+        guideOS: 'ios', // 'ios' | 'android'
+        // Finder wizard state
+        finder: {
+          beziehung: null,
+          profil: null,
+          start: null,
+          mendez: null,
+          geld: null,      // '≥ 2 Mio.' | '< 2 Mio.' | 'ALL' | resolved label
+          selectedId: null, // Final chosen path ID
+          revealedInResult: false
+        },
+        pendingConfirmAction: null
+      };
+
+      /* ==========================================================================
+         3. STORAGE & UTILITY HELPERS
+         ========================================================================== */
+      function cloneDefaults() {
+        return DEFAULT_PATHS.map(p => ({ ...p }));
+      }
+
+      function loadPaths() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return cloneDefaults();
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        } catch (err) {
+          console.error('Fehler beim Laden aus localStorage:', err);
+        }
+        return cloneDefaults();
+      }
+
+      function savePaths() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state.paths));
+        } catch (err) {
+          console.error('Speichern fehlgeschlagen:', err);
+          showToast('⚠️ Lokales Speichern nicht möglich');
+        }
+        updateNavBadge();
+      }
+
+      function loadSpoilerSetting() {
+        try {
+          const val = localStorage.getItem(SPOILER_KEY);
+          return val === null ? false : val === 'true';
+        } catch (err) {
+          return false;
+        }
+      }
+
+      function saveSpoilerSetting() {
+        try {
+          localStorage.setItem(SPOILER_KEY, String(state.spoilerShield));
+        } catch (err) {
+          // ignore storage errors
+        }
+      }
+
+      function escapeHtml(str) {
+        return String(str ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      // Normalize locked strings so "🔒 Zusammen" matches "Zusammen" and "🔒 Erschossen?" matches "Erschossen"
+      function canonicalStart(val) {
+        const clean = String(val || '').replace(/🔒/g, '').trim();
+        if (clean.toLowerCase().includes('zusammen')) return 'Zusammen';
+        if (clean.toLowerCase().includes('trennen')) return 'Trennen';
+        return clean || 'Unbekannt';
+      }
+
+      function canonicalMendez(val) {
+        const clean = String(val || '').replace(/🔒/g, '').replace(/\?/g, '').trim();
+        if (clean.toLowerCase().includes('erschossen')) return 'Erschossen';
+        if (clean.toLowerCase().includes('deal')) return 'Deal angenommen';
+        return clean || 'Unbekannt';
+      }
+
+      function isWildcardMoney(val) {
+        const low = String(val || '').trim().toLowerCase();
+        return low.startsWith('egal') || low.startsWith('prüfen') || low === '???' || low === '';
+      }
+
+      function matchesProfil(pathProfil, selectedProfil) {
+        if (pathProfil === 'Egal') return true;
+        return pathProfil === selectedProfil;
+      }
+
+      function statusMeta(status) {
+        if (status === 'Erledigt') {
+          return { icon: '✅', cls: 'status-done', cardCls: 'is-done', label: 'Erledigt' };
+        }
+        if (status === 'In Arbeit') {
+          return { icon: '🔄', cls: 'status-progress', cardCls: 'is-progress', label: 'In Arbeit' };
+        }
+        return { icon: '⬜', cls: 'status-open', cardCls: 'is-open', label: 'Offen' };
+      }
+
+      function isMeaningfulOutcome(text) {
+        const t = String(text || '').trim();
+        return t !== '' && t !== '???' && t !== '????' && t !== '?????';
+      }
+
+      let toastTimer = null;
+      function showToast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          el.classList.remove('show');
+        }, 2400);
+      }
+
+      function updateNavBadge() {
+        const doneCount = state.paths.filter(p => p.status === 'Erledigt').length;
+        const badge = document.getElementById('navProgressBadge');
+        if (badge) {
+          badge.textContent = `${doneCount}/${state.paths.length}`;
+        }
+      }
+
+      function updateSpoilerUI() {
+        const btn = document.getElementById('spoilerToggleBtn');
+        const icon = document.getElementById('spoilerIcon');
+        const label = document.getElementById('spoilerLabel');
+        if (state.spoilerShield) {
+          btn.classList.add('active');
+          icon.textContent = '🙈';
+          label.textContent = 'Schutz AN';
+        } else {
+          btn.classList.remove('active');
+          icon.textContent = '👁️';
+          label.textContent = 'Schutz AUS';
+        }
+      }
+
+      /* ==========================================================================
+         4. FINDER ENGINE (ZERO DEAD ENDS, DYNAMIC FILTERING)
+         ========================================================================== */
+      function resetFinder() {
+        state.finder = {
+          beziehung: null,
+          profil: null,
+          start: null,
+          mendez: null,
+          geld: null,
+          selectedId: null,
+          revealedInResult: false
+        };
+        render();
+      }
+
+      function jumpToFinderStep(stepKey) {
+        const f = state.finder;
+        f.revealedInResult = false;
+        if (stepKey === 'beziehung') {
+          f.beziehung = null; f.profil = null; f.start = null; f.mendez = null; f.geld = null; f.selectedId = null;
+        } else if (stepKey === 'profil') {
+          f.profil = null; f.start = null; f.mendez = null; f.geld = null; f.selectedId = null;
+        } else if (stepKey === 'start') {
+          f.start = null; f.mendez = null; f.geld = null; f.selectedId = null;
+        } else if (stepKey === 'mendez') {
+          f.mendez = null; f.geld = null; f.selectedId = null;
+        } else if (stepKey === 'geld') {
+          f.geld = null; f.selectedId = null;
+        } else if (stepKey === 'finale') {
+          f.selectedId = null;
+        }
+        render();
+      }
+
+      // Compute filtered paths at each stage of the wizard
+      function getFinderContext() {
+        const f = state.finder;
+        let pool = state.paths.slice();
+
+        // Filter 1: Beziehung
+        if (f.beziehung) {
+          pool = pool.filter(p => p.beziehung === f.beziehung);
+        }
+        const afterBeziehung = pool;
+
+        // Filter 2: Profil (Note: "Egal" matches both Abgebrüht/Prof. and Gewalttätig+!)
+        if (f.profil) {
+          pool = pool.filter(p => matchesProfil(p.profil, f.profil));
+        }
+        const afterProfil = pool;
+
+        // Filter 3: Start
+        if (f.start) {
+          pool = pool.filter(p => canonicalStart(p.start) === f.start);
+        }
+        const afterStart = pool;
+
+        // Filter 4: Méndez
+        if (f.mendez) {
+          pool = pool.filter(p => canonicalMendez(p.mendez) === f.mendez);
+        }
+        const afterMendez = pool;
+
+        // Check whether Money actually splits options at this point
+        const concreteMoneyValues = Array.from(
+          new Set(afterMendez.map(p => p.geld).filter(g => !isWildcardMoney(g)))
+        );
+        const needsMoneyStep = afterMendez.length > 1 && concreteMoneyValues.length >= 2;
+
+        // Filter 5: Geld
+        if (f.geld && f.geld !== 'ALL') {
+          pool = pool.filter(p => p.geld === f.geld || isWildcardMoney(p.geld));
+        }
+        const afterGeld = pool;
+
+        // Determine current active step
+        let currentStep = 'beziehung';
+        let resolvedPath = null;
+
+        if (!f.beziehung) {
+          currentStep = 'beziehung';
+        } else if (!f.profil) {
+          currentStep = 'profil';
+        } else if (!f.start) {
+          currentStep = 'start';
+        } else if (!f.mendez) {
+          currentStep = 'mendez';
+        } else if (f.selectedId !== null) {
+          resolvedPath = state.paths.find(p => p.id === f.selectedId) || null;
+          currentStep = resolvedPath ? 'result' : 'finale';
+        } else if (afterMendez.length === 1) {
+          resolvedPath = afterMendez[0];
+          currentStep = 'result';
+        } else if (needsMoneyStep && !f.geld) {
+          currentStep = 'geld';
+        } else if (afterGeld.length === 1) {
+          resolvedPath = afterGeld[0];
+          currentStep = 'result';
+        } else {
+          currentStep = 'finale';
+        }
+
+        return {
+          afterBeziehung,
+          afterProfil,
+          afterStart,
+          afterMendez,
+          afterGeld,
+          concreteMoneyValues,
+          needsMoneyStep,
+          currentStep,
+          resolvedPath
+        };
+      }
+
+      /* ==========================================================================
+         5. RENDERING: TAB 1 (FINDER)
+         ========================================================================== */
+      function renderFinderTab() {
+        const f = state.finder;
+        const ctx = getFinderContext();
+        const rp = ctx.resolvedPath;
+
+        // Build clickable breadcrumb pills
+        const crumbs = [
+          {
+            key: 'beziehung',
+            label: f.beziehung ? `Beziehung: ${f.beziehung}` : 'Beziehung',
+            done: Boolean(f.beziehung),
+            current: ctx.currentStep === 'beziehung'
+          },
+          {
+            key: 'profil',
+            label: f.profil ? `Profil: ${f.profil}` : 'Profil',
+            done: Boolean(f.profil),
+            current: ctx.currentStep === 'profil'
+          },
+          {
+            key: 'start',
+            label: f.start ? `Start: ${f.start}` : 'Start',
+            done: Boolean(f.start),
+            current: ctx.currentStep === 'start'
+          },
+          {
+            key: 'mendez',
+            label: f.mendez ? `Méndez: ${f.mendez}` : 'Méndez',
+            done: Boolean(f.mendez),
+            current: ctx.currentStep === 'mendez'
+          },
+          {
+            key: 'geld',
+            label: f.geld
+              ? (f.geld === 'ALL' ? 'Geld: Alle' : `Geld: ${f.geld}`)
+              : (rp ? `Geld: ${rp.geld}` : (!ctx.needsMoneyStep && f.mendez ? 'Geld: Auto' : 'Geld')),
+            done: Boolean(f.geld) || Boolean(rp) || (Boolean(f.mendez) && !ctx.needsMoneyStep),
+            current: ctx.currentStep === 'geld',
+            clickable: ctx.needsMoneyStep && (Boolean(f.geld) || Boolean(rp))
+          },
+          {
+            key: 'finale',
+            label: rp ? `Finale: ${rp.finale}` : 'Finale',
+            done: Boolean(rp),
+            current: ctx.currentStep === 'finale' || ctx.currentStep === 'result',
+            clickable: Boolean(rp) && ctx.afterGeld.length > 1
+          }
+        ];
+
+        const breadcrumbHtml = crumbs.map((c, idx) => {
+          const isClickable = c.clickable !== undefined ? c.clickable : (c.done && !c.current);
+          const cls = c.current ? 'crumb current' : (c.done ? 'crumb done' : 'crumb');
+          const attrs = isClickable ? `data-jump="${c.key}"` : 'disabled';
+          return `
+            ${idx > 0 ? '<span class="crumb-sep">›</span>' : ''}
+            <button type="button" class="${cls}" ${attrs}>${escapeHtml(c.label)}</button>
+          `;
+        }).join('');
+
+        let stepHtml = '';
+
+        // STEP 1: BEZIEHUNG
+        if (ctx.currentStep === 'beziehung') {
+          const beziehungen = Array.from(new Set(['Gut', 'Schlecht', ...state.paths.map(p => p.beziehung)]));
+          const buttons = beziehungen.map(b => {
+            const count = state.paths.filter(p => p.beziehung === b).length;
+            const icon = b === 'Gut' ? '💚' : (b === 'Schlecht' ? '💔' : '⚡');
+            const sub = b === 'Gut'
+              ? `Jason & Lucia halten zusammen (${count} Pfade)`
+              : (b === 'Schlecht'
+                ? `Konflikt vor Abe möglich (${count} Pfade)`
+                : `${count} Pfade`);
+            const accent = b === 'Gut' ? 'accent-cyan' : 'accent-pink';
+            return `
+              <button type="button" class="choice-btn ${accent}" data-pick-beziehung="${escapeHtml(b)}">
+                <div class="choice-left">
+                  <span class="choice-title">${icon} ${escapeHtml(b)}</span>
+                  <span class="choice-sub">${escapeHtml(sub)}</span>
+                </div>
+                <span class="choice-arrow">→</span>
+              </button>
+            `;
+          }).join('');
+
+          stepHtml = `
+            <section class="step-card fade-in">
+              <div class="step-header">
+                <span class="step-kicker">Schritt 1 von 6</span>
+                <h2 class="step-title">Wie ist die Beziehung?</h2>
+                <p class="step-desc">Wähle den Beziehungsstatus von Jason &amp; Lucia vor dem Start von „Schutzhaft“.</p>
+              </div>
+              <div class="choice-list">${buttons}</div>
+            </section>
+          `;
+        }
+
+        // STEP 2: PROFIL
+        else if (ctx.currentStep === 'profil') {
+          // Base options: Abgebrüht / Prof. & Gewalttätig+, plus Professionell (extra) for Schlecht (or any custom profile present)
+          const rawProfiles = ctx.afterBeziehung.map(p => p.profil).filter(p => p !== 'Egal');
+          const ordered = [];
+          if (rawProfiles.includes('Abgebrüht / Prof.')) ordered.push('Abgebrüht / Prof.');
+          if (rawProfiles.includes('Gewalttätig+')) ordered.push('Gewalttätig+');
+          if (f.beziehung === 'Schlecht' && rawProfiles.includes('Professionell')) ordered.push('Professionell');
+          rawProfiles.forEach(p => {
+            if (!ordered.includes(p)) ordered.push(p);
+          });
+
+          const buttons = ordered.map(prof => {
+            const matchingCount = ctx.afterBeziehung.filter(p => matchesProfil(p.profil, prof)).length;
+            let displayTitle = prof;
+            let desc = `${matchingCount} passende Pfade`;
+            let accent = '';
+
+            if (prof === 'Abgebrüht / Prof.') {
+              displayTitle = '🕶️ Abgebrüht / Prof.';
+              desc = `Kontrolliertes Spielprofil · inkl. „Egal“-Pfade (${matchingCount} Pfade)`;
+              accent = 'accent-cyan';
+            } else if (prof === 'Gewalttätig+') {
+              displayTitle = '🔥 Gewalttätig+ (z. B. Psycho)';
+              desc = `Eskaliertes Profil · inkl. „Egal“-Pfade (${matchingCount} Pfade)`;
+              accent = 'accent-pink';
+            } else if (prof === 'Professionell') {
+              displayTitle = '⭐ Professionell (extra)';
+              desc = `Sonderpfad bei schlechter Beziehung (${matchingCount} Pfad)`;
+            }
+
+            return `
+              <button type="button" class="choice-btn ${accent}" data-pick-profil="${escapeHtml(prof)}">
+                <div class="choice-left">
+                  <span class="choice-title">${escapeHtml(displayTitle)}</span>
+                  <span class="choice-sub">${escapeHtml(desc)}</span>
+                </div>
+                <span class="choice-arrow">→</span>
+              </button>
+            `;
+          }).join('');
+
+          stepHtml = `
+            <section class="step-card fade-in">
+              <div class="step-header">
+                <span class="step-kicker">Schritt 2 von 6</span>
+                <h2 class="step-title">Welches Verbrecherprofil?</h2>
+                <p class="step-desc">Pfade mit Profil „Egal“ (z. B. Weiterfahren) werden automatisch bei beiden Hauptprofilen mitgefunden.</p>
+              </div>
+              <div class="choice-list">${buttons}</div>
+            </section>
+          `;
+        }
+
+        // STEP 3: START (VOR ABE)
+        else if (ctx.currentStep === 'start') {
+          const uniqueStarts = Array.from(new Set(ctx.afterProfil.map(p => canonicalStart(p.start))));
+          const isGoodAutoLock = f.beziehung === 'Gut' && uniqueStarts.length === 1 && uniqueStarts[0] === 'Zusammen';
+          const isProfSpecial = f.profil === 'Professionell' && uniqueStarts.length === 1;
+
+          if (isGoodAutoLock) {
+            stepHtml = `
+              <section class="step-card fade-in">
+                <div class="step-header">
+                  <span class="step-kicker">Schritt 3 von 6 · Start (vor Abe)</span>
+                  <h2 class="step-title">Automatischer Verlauf</h2>
+                </div>
+                <div class="lock-banner">
+                  <div class="lock-banner-head">🔒 Automatisch: Zusammen</div>
+                  <p class="lock-banner-text">
+                    Bei guter Beziehung überspringt das Spiel das Trennungs-Gespräch vor Abe – Jason &amp; Lucia bleiben automatisch zusammen.
+                  </p>
+                </div>
+                <button type="button" class="btn btn-primary" data-pick-start="Zusammen">
+                  Weiter zu Méndez →
+                </button>
+              </section>
+            `;
+          } else if (isProfSpecial) {
+            const onlyStart = uniqueStarts[0];
+            stepHtml = `
+              <section class="step-card fade-in">
+                <div class="step-header">
+                  <span class="step-kicker">Schritt 3 von 6 · Start (vor Abe)</span>
+                  <h2 class="step-title">Sonderpfad „Professionell“</h2>
+                </div>
+                <div class="lock-banner">
+                  <div class="lock-banner-head">⭐ Relevanter Start: ${escapeHtml(onlyStart)}</div>
+                  <p class="lock-banner-text">
+                    Der Extra-Eintrag für „Professionell“ zählt gezielt auf dem „${escapeHtml(onlyStart)}“-Pfad.
+                  </p>
+                </div>
+                <button type="button" class="btn btn-primary" data-pick-start="${escapeHtml(onlyStart)}">
+                  Mit „${escapeHtml(onlyStart)}“ weiter →
+                </button>
+              </section>
+            `;
+          } else {
+            const buttons = uniqueStarts.map(st => {
+              const count = ctx.afterProfil.filter(p => canonicalStart(p.start) === st).length;
+              const icon = st === 'Zusammen' ? '🤝' : (st === 'Trennen' ? '↔️' : '📌');
+              const sub = st === 'Zusammen'
+                ? `Beide ziehen es gemeinsam durch (${count} Pfade)`
+                : (st === 'Trennen'
+                  ? `Getrennte Wege vor Abe (${count} Pfade)`
+                  : `${count} Pfade`);
+              return `
+                <button type="button" class="choice-btn" data-pick-start="${escapeHtml(st)}">
+                  <div class="choice-left">
+                    <span class="choice-title">${icon} ${escapeHtml(st)}</span>
+                    <span class="choice-sub">${escapeHtml(sub)}</span>
+                  </div>
+                  <span class="choice-arrow">→</span>
+                </button>
+              `;
+            }).join('');
+
+            stepHtml = `
+              <section class="step-card fade-in">
+                <div class="step-header">
+                  <span class="step-kicker">Schritt 3 von 6</span>
+                  <h2 class="step-title">Start (vor Abe)</h2>
+                  <p class="step-desc">Bei schlechter Beziehung entscheidest du vor dem Gespräch mit Abe, wie es weitergeht.</p>
+                </div>
+                <div class="choice-list">${buttons}</div>
+              </section>
+            `;
+          }
+        }
+
+        // STEP 4: MÉNDEZ
+        else if (ctx.currentStep === 'mendez') {
+          const uniqueMendez = Array.from(new Set(ctx.afterStart.map(p => canonicalMendez(p.mendez))));
+          const hasLock = ctx.afterStart.some(p => p.mendez.includes('🔒'));
+          const hasQuestion = ctx.afterStart.some(p => p.mendez.includes('?'));
+
+          if (uniqueMendez.length === 1) {
+            const onlyOpt = uniqueMendez[0];
+            if (f.beziehung === 'Gut' && f.profil === 'Gewalttätig+' && onlyOpt === 'Erschossen') {
+              stepHtml = `
+                <section class="step-card fade-in">
+                  <div class="step-header">
+                    <span class="step-kicker">Schritt 4 von 6 · Méndez</span>
+                    <h2 class="step-title">Automatische Entscheidung</h2>
+                  </div>
+                  <div class="lock-banner">
+                    <div class="lock-banner-head">🔒 Automatisch: Erschossen</div>
+                    <p class="lock-banner-text">
+                      Bei gewalttätigem Profil (z. B. Psycho) erschießt Jason Méndez eigenständig – der Deal ist hier gesperrt.
+                    </p>
+                  </div>
+                  <button type="button" class="btn btn-primary" data-pick-mendez="Erschossen">
+                    Weiter zur Finalen Wahl →
+                  </button>
+                </section>
+              `;
+            } else if (hasLock) {
+              stepHtml = `
+                <section class="step-card fade-in">
+                  <div class="step-header">
+                    <span class="step-kicker">Schritt 4 von 6 · Méndez</span>
+                    <h2 class="step-title">Voraussichtlich erzwungen</h2>
+                  </div>
+                  <div class="lock-banner warn">
+                    <div class="lock-banner-head">🔒 ${escapeHtml(onlyOpt)}${hasQuestion ? '?' : ''}</div>
+                    <p class="lock-banner-text">
+                      Für diese Kombination ist aktuell nur „${escapeHtml(onlyOpt)}${hasQuestion ? '?' : ''}“ hinterlegt (bei gewalttätigem Profil noch gegenprüfen).
+                    </p>
+                  </div>
+                  <button type="button" class="btn btn-primary" data-pick-mendez="${escapeHtml(onlyOpt)}">
+                    Weiter →
+                  </button>
+                </section>
+              `;
+            } else {
+              stepHtml = `
+                <section class="step-card fade-in">
+                  <div class="step-header">
+                    <span class="step-kicker">Schritt 4 von 6 · Méndez</span>
+                    <h2 class="step-title">Entscheidung bei Méndez</h2>
+                  </div>
+                  <div class="lock-banner">
+                    <div class="lock-banner-head">🎯 Einzige Option: ${escapeHtml(onlyOpt)}</div>
+                    <p class="lock-banner-text">
+                      Auf diesem Pfad ist genau „${escapeHtml(onlyOpt)}“ in deinem Tracker hinterlegt.
+                    </p>
+                  </div>
+                  <button type="button" class="btn btn-primary" data-pick-mendez="${escapeHtml(onlyOpt)}">
+                    Mit „${escapeHtml(onlyOpt)}“ weiter →
+                  </button>
+                </section>
+              `;
+            }
+          } else {
+            const buttons = uniqueMendez.map(m => {
+              const count = ctx.afterStart.filter(p => canonicalMendez(p.mendez) === m).length;
+              const icon = m === 'Erschossen' ? '🔫' : (m === 'Deal angenommen' ? '🤝' : '⚡');
+              const sub = m === 'Erschossen'
+                ? `Méndez direkt abdrücken (${count} ${count === 1 ? 'Pfad' : 'Pfade'})`
+                : (m === 'Deal angenommen'
+                  ? `Abwarten & Angebot annehmen (${count} ${count === 1 ? 'Pfad' : 'Pfade'})`
+                  : `${count} Pfade`);
+              return `
+                <button type="button" class="choice-btn" data-pick-mendez="${escapeHtml(m)}">
+                  <div class="choice-left">
+                    <span class="choice-title">${icon} ${escapeHtml(m)}</span>
+                    <span class="choice-sub">${escapeHtml(sub)}</span>
+                  </div>
+                  <span class="choice-arrow">→</span>
+                </button>
+              `;
+            }).join('');
+
+            stepHtml = `
+              <section class="step-card fade-in">
+                <div class="step-header">
+                  <span class="step-kicker">Schritt 4 von 6</span>
+                  <h2 class="step-title">Was passiert bei Méndez?</h2>
+                  <p class="step-desc">Wähle deine Entscheidung am Ende des Méndez-Gesprächs.</p>
+                </div>
+                <div class="choice-list">${buttons}</div>
+              </section>
+            `;
+          }
+        }
+
+        // STEP 5: GELD (DYNAMICALLY SHOWN WHEN MONEY DIFFERENTIATES PATHS)
+        else if (ctx.currentStep === 'geld') {
+          const moneyButtons = ctx.concreteMoneyValues.map(val => {
+            const matchCount = ctx.afterMendez.filter(p => p.geld === val || isWildcardMoney(p.geld)).length;
+            const icon = val.includes('≥') ? '💰' : '💸';
+            return `
+              <button type="button" class="choice-btn ${val.includes('≥') ? 'accent-cyan' : ''}" data-pick-geld="${escapeHtml(val)}">
+                <div class="choice-left">
+                  <span class="choice-title">${icon} ${escapeHtml(val)}</span>
+                  <span class="choice-sub">${matchCount} passende Final-Optionen (inkl. Egal / Prüfen)</span>
+                </div>
+                <span class="choice-arrow">→</span>
+              </button>
+            `;
+          }).join('');
+
+          stepHtml = `
+            <section class="step-card fade-in">
+              <div class="step-header">
+                <span class="step-kicker">Schritt 5 von 6</span>
+                <h2 class="step-title">Wie viel Geld hast du?</h2>
+                <p class="step-desc">Auf diesem Zweig macht der Kontostand einen Unterschied. Pfade mit „Egal“ oder „Prüfen“ bleiben trotzdem auswählbar.</p>
+              </div>
+              <div class="choice-list">
+                ${moneyButtons}
+                <button type="button" class="choice-btn" data-pick-geld="ALL">
+                  <div class="choice-left">
+                    <span class="choice-title">📋 Alle Geld-Varianten anzeigen</span>
+                    <span class="choice-sub">Direkt alle ${ctx.afterMendez.length} verbleibenden Final-Optionen vergleichen</span>
+                  </div>
+                  <span class="choice-arrow">→</span>
+                </button>
+              </div>
+            </section>
+          `;
+        }
+
+        // STEP 6: FINALE WAHL
+        else if (ctx.currentStep === 'finale') {
+          const finaleButtons = ctx.afterGeld.map(p => {
+            const st = statusMeta(p.status);
+            const badges = [];
+            badges.push(`<span class="chip">${escapeHtml(st.icon)} ${escapeHtml(st.label)}</span>`);
+            badges.push(`<span class="chip">💵 ${escapeHtml(p.geld)}</span>`);
+            if (p.profil === 'Egal') {
+              badges.push(`<span class="chip chip-pink">Profil: Egal</span>`);
+            }
+
+            return `
+              <button type="button" class="choice-btn" data-pick-id="${p.id}">
+                <div class="choice-left">
+                  <span class="choice-title">🎬 ${escapeHtml(p.finale)}</span>
+                  <div class="chip-wrap" style="margin-top:4px;">${badges.join('')}</div>
+                </div>
+                <span class="choice-arrow">→</span>
+              </button>
+            `;
+          }).join('');
+
+          stepHtml = `
+            <section class="step-card fade-in">
+              <div class="step-header">
+                <span class="step-kicker">Schritt 6 von 6</span>
+                <h2 class="step-title">Finale Wahl</h2>
+                <p class="step-desc">Wähle die abschließende Entscheidung, um das passende Ergebnis anzuzeigen.</p>
+              </div>
+              <div class="choice-list">${finaleButtons}</div>
+            </section>
+          `;
+        }
+
+        // RESULT VIEW
+        else if (ctx.currentStep === 'result' && rp) {
+          const st = statusMeta(rp.status);
+          const shouldBlur = state.spoilerShield && !f.revealedInResult && isMeaningfulOutcome(rp.ergebnis);
+
+          const chips = [
+            { label: `Beziehung: ${rp.beziehung}`, lock: false },
+            { label: `Profil: ${rp.profil}`, lock: false, pink: rp.profil === 'Egal' || rp.profil === 'Professionell' },
+            { label: `Start: ${rp.start}`, lock: rp.start.includes('🔒') },
+            { label: `Méndez: ${rp.mendez}`, lock: rp.mendez.includes('🔒') },
+            { label: `Geld: ${rp.geld}`, lock: false },
+            { label: `Finale: ${rp.finale}`, lock: false }
+          ];
+
+          stepHtml = `
+            <section class="step-card fade-in">
+              <div class="result-head">
+                <span class="status-badge ${st.cls}">${st.icon} ${escapeHtml(st.label)}</span>
+                <span class="path-id-tag">Pfad #${rp.id}</span>
+              </div>
+
+              <div>
+                <div class="outcome-label" style="margin-bottom:8px;">Gewählter Pfad</div>
+                <div class="chip-wrap">
+                  ${chips.map(c => `<span class="chip ${c.lock ? 'chip-lock' : (c.pink ? 'chip-pink' : '')}">${escapeHtml(c.label)}</span>`).join('')}
+                </div>
+              </div>
+
+              <div class="outcome-box ${shouldBlur ? 'spoiler-locked' : ''}" id="resultOutcomeBox">
+                <span class="outcome-label">Was passiert?</span>
+                <p class="outcome-text">${escapeHtml(rp.ergebnis)}</p>
+                ${shouldBlur ? '<div class="spoiler-overlay">👁️ Tippen zum Aufdecken</div>' : ''}
+              </div>
+
+              <div>
+                <div class="outcome-label" style="margin-bottom:6px;">Status schnell ändern</div>
+                <div class="quick-status">
+                  <button type="button" class="qs-btn ${rp.status === 'Erledigt' ? 'active-done' : ''}" data-quick-status="Erledigt" data-id="${rp.id}">✅ Erledigt</button>
+                  <button type="button" class="qs-btn ${rp.status === 'In Arbeit' ? 'active-progress' : ''}" data-quick-status="In Arbeit" data-id="${rp.id}">🔄 In Arbeit</button>
+                  <button type="button" class="qs-btn ${rp.status === 'Offen' ? 'active-open' : ''}" data-quick-status="Offen" data-id="${rp.id}">⬜ Offen</button>
+                </div>
+              </div>
+
+              <div class="btn-row">
+                <button type="button" class="btn btn-cyan" data-edit-id="${rp.id}">✏️ Bearbeiten</button>
+                <button type="button" class="btn btn-secondary" id="resultRestartBtn">↺ Neu suchen</button>
+              </div>
+            </section>
+          `;
+        }
+
+        return `
+          <div class="finder-topbar">
+            <span class="finder-label">Pfad-Assistent</span>
+            <button type="button" id="finderResetBtn" class="btn-mini-reset">↺ Neu starten</button>
+          </div>
+          <div class="breadcrumbs" id="breadcrumbBar">${breadcrumbHtml}</div>
+          ${stepHtml}
+        `;
+      }
+
+      /* ==========================================================================
+         6. RENDERING: TAB 2 (ÜBERSICHT)
+         ========================================================================== */
+      function renderOverviewTab() {
+        const total = state.paths.length;
+        const done = state.paths.filter(p => p.status === 'Erledigt').length;
+        const progress = state.paths.filter(p => p.status === 'In Arbeit').length;
+        const open = state.paths.filter(p => p.status === 'Offen').length;
+        const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+        const filters = ['Alle', 'Erledigt', 'Offen', 'In Arbeit', 'Gut', 'Schlecht'];
+        const filterLabels = {
+          'Alle': 'Alle',
+          'Erledigt': '✅ Erledigt',
+          'Offen': '⬜ Offen',
+          'In Arbeit': '🔄 In Arbeit',
+          'Gut': '💚 Gut',
+          'Schlecht': '💔 Schlecht'
+        };
+
+        const filtered = state.paths.filter(p => {
+          const flt = state.overviewFilter;
+          if (flt === 'Alle') return true;
+          if (flt === 'Erledigt' || flt === 'Offen' || flt === 'In Arbeit') return p.status === flt;
+          if (flt === 'Gut' || flt === 'Schlecht') return p.beziehung === flt;
+          return true;
+        });
+
+        const cardsHtml = filtered.length === 0
+          ? `<div class="empty-state">Keine Pfade für den Filter „${escapeHtml(state.overviewFilter)}“ vorhanden.</div>`
+          : filtered.map(p => {
+              const st = statusMeta(p.status);
+              const blurOutcome = state.spoilerShield && isMeaningfulOutcome(p.ergebnis);
+              return `
+                <article class="path-card ${st.cardCls}" data-edit-id="${p.id}" role="button" tabindex="0">
+                  <div class="path-card-top">
+                    <span class="path-card-title">#${p.id} · ${escapeHtml(p.finale)}</span>
+                    <span class="status-badge ${st.cls}">${st.icon} ${escapeHtml(st.label)}</span>
+                  </div>
+                  <div class="chip-wrap">
+                    <span class="chip">${p.beziehung === 'Gut' ? '💚' : '💔'} ${escapeHtml(p.beziehung)}</span>
+                    <span class="chip ${p.profil === 'Egal' || p.profil === 'Professionell' ? 'chip-pink' : ''}">${escapeHtml(p.profil)}</span>
+                    <span class="chip ${p.start.includes('🔒') ? 'chip-lock' : ''}">${escapeHtml(p.start)}</span>
+                    <span class="chip ${p.mendez.includes('🔒') ? 'chip-lock' : ''}">${escapeHtml(p.mendez)}</span>
+                    <span class="chip">💵 ${escapeHtml(p.geld)}</span>
+                  </div>
+                  <p class="path-card-outcome ${blurOutcome ? 'blurred' : ''}">${escapeHtml(p.ergebnis)}</p>
+                </article>
+              `;
+            }).join('');
+
+        return `
+          <section class="progress-card fade-in">
+            <div class="progress-top">
+              <span class="progress-count">${done} / ${total} erledigt</span>
+              <span class="progress-pct">${pct}%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" style="width:${pct}%"></div>
+            </div>
+            <div class="progress-stats">
+              <div class="stat-pill"><strong style="color:#86efac;">${done}</strong>Erledigt</div>
+              <div class="stat-pill"><strong style="color:#bae6fd;">${progress}</strong>In Arbeit</div>
+              <div class="stat-pill"><strong style="color:#fde047;">${open}</strong>Offen</div>
+            </div>
+          </section>
+
+          <div class="filter-row">
+            ${filters.map(flt => `
+              <button type="button" class="filter-chip ${state.overviewFilter === flt ? 'active' : ''}" data-filter="${flt}">
+                ${filterLabels[flt]}
+              </button>
+            `).join('')}
+          </div>
+
+          <div class="overview-actions">
+            <span class="overview-count-label">${filtered.length} ${filtered.length === 1 ? 'Pfad angezeigt' : 'Pfade angezeigt'}</span>
+            <button type="button" id="addNewPathBtn" class="btn-add-inline">+ Neuer Pfad</button>
+          </div>
+
+          <div class="path-list fade-in">${cardsHtml}</div>
+        `;
+      }
+
+      /* ==========================================================================
+         7. RENDERING: TAB 3 (DATEN & EXCEL-SYNC)
+         ========================================================================== */
+      function renderDataTab() {
+        const iosSteps = [
+          'Öffne diese Seite auf deinem iPhone in <strong>Safari</strong>.',
+          'Tippe unten in der Leiste auf das <strong>Teilen-Symbol</strong> (Viereck mit Pfeil nach oben).',
+          'Wähle <strong>„Zum Home-Bildschirm“</strong> und tippe oben rechts auf <strong>„Hinzufügen“</strong> – fertig!'
+        ];
+        const androidSteps = [
+          'Öffne diese Seite auf deinem Smartphone in <strong>Chrome</strong>.',
+          'Tippe oben rechts auf das <strong>Drei-Punkte-Menü (⋮)</strong>.',
+          'Tippe auf <strong>„Zum Startbildschirm hinzufügen“</strong> (oder „App installieren“) und bestätige – fertig!'
+        ];
+        const steps = state.guideOS === 'ios' ? iosSteps : androidSteps;
+
+        return `
+          <section class="data-card fade-in">
+            <h3>💾 Automatischer Speicher</h3>
+            <div class="sync-badge">✓ Alle ${state.paths.length} Pfade sind lokal im Browser gespeichert</div>
+            <p>Du kannst jederzeit Ergebnisse und Status direkt am Handy eintragen – deine Daten bleiben auch offline erhalten.</p>
+          </section>
+
+          <section class="data-card fade-in">
+            <h3>📊 Excel-Export &amp; Backup</h3>
+            <p>Exportiere deine aktuelle Tabelle direkt für deutsches Excel (UTF-8 mit Semikolon) oder sichere sie als JSON-Backup zum Teilen.</p>
+            <button type="button" id="exportCsvBtn" class="btn btn-cyan">📥 Als CSV (für Excel) exportieren</button>
+            <div class="btn-row">
+              <button type="button" id="exportJsonBtn" class="btn btn-secondary">⬇️ Backup (JSON)</button>
+              <button type="button" id="importJsonBtn" class="btn btn-secondary">⬆️ Backup laden</button>
+            </div>
+          </section>
+
+          <section class="data-card fade-in">
+            <h3>📱 Als App auf den Home-Bildschirm</h3>
+            <div class="guide-tabs">
+              <button type="button" class="guide-tab-btn ${state.guideOS === 'ios' ? 'active' : ''}" data-guide-os="ios">iPhone (Safari)</button>
+              <button type="button" class="guide-tab-btn ${state.guideOS === 'android' ? 'active' : ''}" data-guide-os="android">Android (Chrome)</button>
+            </div>
+            <ol class="guide-steps">
+              ${steps.map((txt, idx) => `
+                <li>
+                  <span class="guide-num">${idx + 1}</span>
+                  <span>${txt}</span>
+                </li>
+              `).join('')}
+            </ol>
+          </section>
+
+          <section class="data-card fade-in">
+            <h3>🔄 Zurücksetzen</h3>
+            <p>Stellt exakt die 14 ursprünglichen, spoilerfreien Startpfade wieder her.</p>
+            <button type="button" id="resetDefaultsBtn" class="btn btn-danger">Auf Startdaten zurücksetzen</button>
+          </section>
+        `;
+      }
+
+      /* ==========================================================================
+         8. MASTER RENDER & EVENT BINDING
+         ========================================================================== */
+      function render() {
+        const main = document.getElementById('appMain');
+        updateSpoilerUI();
+        updateNavBadge();
+
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.tab === state.activeTab);
+        });
+
+        if (state.activeTab === 'finder') {
+          main.innerHTML = renderFinderTab();
+          bindFinderEvents();
+          // Scroll breadcrumb bar smoothly to the right so active step stays visible
+          const bar = document.getElementById('breadcrumbBar');
+          if (bar) {
+            const activeCrumb = bar.querySelector('.crumb.current');
+            if (activeCrumb) {
+              activeCrumb.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }
+          }
+        } else if (state.activeTab === 'overview') {
+          main.innerHTML = renderOverviewTab();
+          bindOverviewEvents();
+        } else {
+          main.innerHTML = renderDataTab();
+          bindDataEvents();
+        }
+      }
+
+      function bindFinderEvents() {
+        const resetBtn = document.getElementById('finderResetBtn');
+        if (resetBtn) resetBtn.addEventListener('click', resetFinder);
+
+        const resultRestart = document.getElementById('resultRestartBtn');
+        if (resultRestart) resultRestart.addEventListener('click', resetFinder);
+
+        document.querySelectorAll('[data-jump]').forEach(btn => {
+          btn.addEventListener('click', () => jumpToFinderStep(btn.dataset.jump));
+        });
+
+        document.querySelectorAll('[data-pick-beziehung]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.finder.beziehung = btn.dataset.pickBeziehung;
+            render();
+          });
+        });
+
+        document.querySelectorAll('[data-pick-profil]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.finder.profil = btn.dataset.pickProfil;
+            render();
+          });
+        });
+
+        document.querySelectorAll('[data-pick-start]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.finder.start = btn.dataset.pickStart;
+            render();
+          });
+        });
+
+        document.querySelectorAll('[data-pick-mendez]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.finder.mendez = btn.dataset.pickMendez;
+            render();
+          });
+        });
+
+        document.querySelectorAll('[data-pick-geld]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.finder.geld = btn.dataset.pickGeld;
+            render();
+          });
+        });
+
+        document.querySelectorAll('[data-pick-id]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.finder.selectedId = Number(btn.dataset.pickId);
+            state.finder.revealedInResult = false;
+            render();
+          });
+        });
+
+        const outcomeBox = document.getElementById('resultOutcomeBox');
+        if (outcomeBox && outcomeBox.classList.contains('spoiler-locked')) {
+          outcomeBox.addEventListener('click', () => {
+            state.finder.revealedInResult = true;
+            render();
+          });
+        }
+
+        document.querySelectorAll('[data-quick-status]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = Number(btn.dataset.id);
+            const newStatus = btn.dataset.quickStatus;
+            const target = state.paths.find(p => p.id === id);
+            if (target) {
+              target.status = newStatus;
+              savePaths();
+              showToast(`Status auf „${newStatus}“ gesetzt`);
+              render();
+            }
+          });
+        });
+
+        document.querySelectorAll('[data-edit-id]').forEach(btn => {
+          btn.addEventListener('click', () => openEditModal(Number(btn.dataset.editId)));
+        });
+      }
+
+      function bindOverviewEvents() {
+        document.querySelectorAll('[data-filter]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.overviewFilter = btn.dataset.filter;
+            render();
+          });
+        });
+
+        const addBtn = document.getElementById('addNewPathBtn');
+        if (addBtn) addBtn.addEventListener('click', () => openEditModal(null));
+
+        document.querySelectorAll('[data-edit-id]').forEach(card => {
+          card.addEventListener('click', () => openEditModal(Number(card.dataset.editId)));
+        });
+      }
+
+      function bindDataEvents() {
+        const csvBtn = document.getElementById('exportCsvBtn');
+        if (csvBtn) csvBtn.addEventListener('click', exportCSV);
+
+        const jsonBtn = document.getElementById('exportJsonBtn');
+        if (jsonBtn) jsonBtn.addEventListener('click', exportJSON);
+
+        const importBtn = document.getElementById('importJsonBtn');
+        if (importBtn) {
+          importBtn.addEventListener('click', () => {
+            document.getElementById('jsonImportInput').click();
+          });
+        }
+
+        const resetBtn = document.getElementById('resetDefaultsBtn');
+        if (resetBtn) {
+          resetBtn.addEventListener('click', () => {
+            openConfirm(
+              'Startdaten wiederherstellen?',
+              'Alle eigenen Notizen, Änderungen und neuen Pfade werden durch die 14 ursprünglichen Startdaten ersetzt.',
+              () => {
+                state.paths = cloneDefaults();
+                savePaths();
+                resetFinder();
+                showToast('✓ Auf 14 Startdaten zurückgesetzt');
+              }
+            );
+          });
+        }
+
+        document.querySelectorAll('[data-guide-os]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.guideOS = btn.dataset.guideOs;
+            render();
+          });
+        });
+      }
+
+      /* ==========================================================================
+         9. BOTTOM-SHEET EDITOR & CUSTOM CONFIRM MODAL
+         ========================================================================== */
+      const editModal = document.getElementById('editModal');
+      const pathForm = document.getElementById('pathForm');
+      const deletePathBtn = document.getElementById('deletePathBtn');
+
+      function openEditModal(pathId) {
+        const sheetTitle = document.getElementById('sheetTitle');
+        if (pathId === null) {
+          sheetTitle.textContent = '+ Neuen Pfad anlegen';
+          document.getElementById('fieldId').value = '';
+          document.getElementById('fieldStatus').value = 'Offen';
+          document.getElementById('fieldBeziehung').value = 'Gut';
+          document.getElementById('fieldProfil').value = 'Abgebrüht / Prof.';
+          document.getElementById('fieldGeld').value = 'Prüfen';
+          document.getElementById('fieldStart').value = '🔒 Zusammen';
+          document.getElementById('fieldMendez').value = 'Erschossen';
+          document.getElementById('fieldFinale').value = '???';
+          document.getElementById('fieldErgebnis').value = '???';
+          deletePathBtn.style.display = 'none';
+        } else {
+          const item = state.paths.find(p => p.id === pathId);
+          if (!item) return;
+          sheetTitle.textContent = `Pfad #${item.id} bearbeiten`;
+          document.getElementById('fieldId').value = String(item.id);
+          document.getElementById('fieldStatus').value = item.status;
+          document.getElementById('fieldBeziehung').value = item.beziehung;
+          document.getElementById('fieldProfil').value = item.profil;
+          document.getElementById('fieldGeld').value = item.geld;
+          document.getElementById('fieldStart').value = item.start;
+          document.getElementById('fieldMendez').value = item.mendez;
+          document.getElementById('fieldFinale').value = item.finale;
+          document.getElementById('fieldErgebnis').value = item.ergebnis;
+          deletePathBtn.style.display = 'inline-flex';
+        }
+        editModal.classList.add('open');
+      }
+
+      function closeEditModal() {
+        editModal.classList.remove('open');
+      }
+
+      document.getElementById('closeModalBtn').addEventListener('click', closeEditModal);
+      editModal.addEventListener('click', (e) => {
+        if (e.target === editModal) closeEditModal();
+      });
+
+      pathForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const rawId = document.getElementById('fieldId').value;
+        const payload = {
+          beziehung: document.getElementById('fieldBeziehung').value.trim() || 'Gut',
+          profil: document.getElementById('fieldProfil').value.trim() || 'Abgebrüht / Prof.',
+          geld: document.getElementById('fieldGeld').value.trim() || 'Prüfen',
+          start: document.getElementById('fieldStart').value.trim() || 'Zusammen',
+          mendez: document.getElementById('fieldMendez').value.trim() || 'Erschossen',
+          finale: document.getElementById('fieldFinale').value.trim() || '???',
+          ergebnis: document.getElementById('fieldErgebnis').value.trim() || '???',
+          status: document.getElementById('fieldStatus').value
+        };
+
+        if (rawId) {
+          const id = Number(rawId);
+          const idx = state.paths.findIndex(p => p.id === id);
+          if (idx !== -1) {
+            state.paths[idx] = { id, ...payload };
+            showToast(`✓ Pfad #${id} aktualisiert`);
+          }
+        } else {
+          const nextId = state.paths.reduce((max, p) => Math.max(max, Number(p.id) || 0), 0) + 1;
+          state.paths.push({ id: nextId, ...payload });
+          showToast(`✓ Neuer Pfad #${nextId} hinzugefügt`);
+        }
+
+        savePaths();
+        closeEditModal();
+        render();
+      });
+
+      deletePathBtn.addEventListener('click', () => {
+        const rawId = document.getElementById('fieldId').value;
+        if (!rawId) return;
+        const id = Number(rawId);
+        openConfirm(
+          `Pfad #${id} löschen?`,
+          'Dieser Eintrag wird dauerhaft aus deiner Liste entfernt.',
+          () => {
+            state.paths = state.paths.filter(p => p.id !== id);
+            if (state.finder.selectedId === id) {
+              state.finder.selectedId = null;
+            }
+            savePaths();
+            closeEditModal();
+            showToast(`🗑️ Pfad #${id} gelöscht`);
+            render();
+          }
+        );
+      });
+
+      // Custom Confirmation Dialog
+      const confirmModal = document.getElementById('confirmModal');
+      function openConfirm(title, message, onConfirm) {
+        document.getElementById('confirmTitle').textContent = title;
+        document.getElementById('confirmMessage').textContent = message;
+        state.pendingConfirmAction = onConfirm;
+        confirmModal.classList.add('open');
+      }
+
+      function closeConfirm() {
+        confirmModal.classList.remove('open');
+        state.pendingConfirmAction = null;
+      }
+
+      document.getElementById('confirmCancelBtn').addEventListener('click', closeConfirm);
+      confirmModal.addEventListener('click', (e) => {
+        if (e.target === confirmModal) closeConfirm();
+      });
+      document.getElementById('confirmOkBtn').addEventListener('click', () => {
+        const fn = state.pendingConfirmAction;
+        closeConfirm();
+        if (typeof fn === 'function') fn();
+      });
+
+      /* ==========================================================================
+         10. CSV EXPORT (GERMAN EXCEL) & JSON BACKUP / RESTORE
+         ========================================================================== */
+      function csvEscape(val) {
+        const str = String(val ?? '');
+        if (/[;"\n\r]/.test(str)) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      }
+
+      function triggerDownload(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 150);
+      }
+
+      function getDateStamp() {
+        const d = new Date();
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+      }
+
+      function exportCSV() {
+        const headers = ['ID', 'Beziehung', 'Profil', 'Geld', 'Start (vor Abe)', 'Méndez', 'Finale Wahl', 'Was passiert?', 'Status'];
+        const rows = state.paths.map(p => [
+          p.id, p.beziehung, p.profil, p.geld, p.start, p.mendez, p.finale, p.ergebnis, p.status
+        ].map(csvEscape).join(';'));
+
+        // UTF-8 BOM guarantees clean umlauts & symbols in German Microsoft Excel
+        const csvContent = '\uFEFF' + headers.join(';') + '\r\n' + rows.join('\r\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        triggerDownload(blob, `GTA6_Enden_Tracker_${getDateStamp()}.csv`);
+        showToast('📥 Excel-CSV heruntergeladen');
+      }
+
+      function exportJSON() {
+        const json = JSON.stringify(state.paths, null, 2);
+        const blob = new Blob([json], { type: 'application/json;charset=utf-8;' });
+        triggerDownload(blob, `GTA6_Enden_Backup_${getDateStamp()}.json`);
+        showToast('⬇️ JSON-Backup gespeichert');
+      }
+
+      document.getElementById('jsonImportInput').addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const parsed = JSON.parse(String(reader.result));
+            if (!Array.isArray(parsed) || parsed.length === 0) {
+              throw new Error('Ungültiges Format');
+            }
+            const sanitized = parsed.map((item, idx) => ({
+              id: Number(item.id) || idx + 1,
+              beziehung: String(item.beziehung || 'Gut'),
+              profil: String(item.profil || 'Abgebrüht / Prof.'),
+              geld: String(item.geld || 'Prüfen'),
+              start: String(item.start || 'Zusammen'),
+              mendez: String(item.mendez || 'Erschossen'),
+              finale: String(item.finale || '???'),
+              ergebnis: String(item.ergebnis || '???'),
+              status: ['Erledigt', 'Offen', 'In Arbeit'].includes(item.status) ? item.status : 'Offen'
+            }));
+            state.paths = sanitized;
+            savePaths();
+            resetFinder();
+            showToast(`✓ ${sanitized.length} Pfade aus Backup geladen`);
+          } catch (err) {
+            showToast('⚠️ Backup-Datei konnte nicht gelesen werden');
+          } finally {
+            e.target.value = '';
+          }
+        };
+        reader.readAsText(file, 'utf-8');
+      });
+
+      /* ==========================================================================
+         11. GLOBAL NAVIGATION & SPOILER TOGGLE EVENTS
+         ========================================================================== */
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.activeTab = btn.dataset.tab;
+          render();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+
+      document.getElementById('spoilerToggleBtn').addEventListener('click', () => {
+        state.spoilerShield = !state.spoilerShield;
+        state.finder.revealedInResult = false;
+        saveSpoilerSetting();
+        showToast(state.spoilerShield ? '🙈 Spoiler-Schutz aktiviert' : '👁️ Spoiler-Schutz deaktiviert');
+        render();
+      });
+
+      // Initial render
+      render();
+    })();
+  </script>
+</body>
+</html>
